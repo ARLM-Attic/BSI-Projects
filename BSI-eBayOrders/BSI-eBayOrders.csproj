@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BSI_eBayOrders</RootNamespace>
     <AssemblyName>BSI-eBayOrders</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -70,10 +70,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="eBay.Service">
-      <HintPath>..\..\..\eBay.Service.dll</HintPath>
+      <HintPath>..\eBay.Service.dll</HintPath>
     </Reference>
     <Reference Include="eBay.Service.SDK.Attribute">
-      <HintPath>..\..\..\eBay.Service.SDK.Attribute.dll</HintPath>
+      <HintPath>..\eBay.Service.SDK.Attribute.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
@@ -148,9 +148,7 @@
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Service References\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="favicon.ico" />
   </ItemGroup>

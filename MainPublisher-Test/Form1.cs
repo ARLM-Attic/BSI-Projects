@@ -100,112 +100,6 @@ namespace Publisher_Test
             InitializeComponent();
         } // Form1
 
-        private void btnStop_Click(object sender, EventArgs e)
-        {
-            lstop = true;
-        } // btnStop_Click
-
-        private void btnStart_Click(object sender, EventArgs e)
-        {
-            lstop = false;
-            publishProducts();
-        } // btnStart_Click
-
-        private void btnSearch_Click(object sender, EventArgs e)
-        {
-            if (!String.IsNullOrEmpty(txtItemID.Text))
-            {
-                int lid = (int)cmbMarketplace.SelectedValue;
-
-                try
-                {
-                    String lresponse = "\r\n" + txtStatus.Text;
-                    currentMarketPlace = ldsMarkets[cmbMarketplace.SelectedIndex];
-                    GetApiContext();
-
-                    /*
-                    GetItemCall lgic = new GetItemCall(apiContext);
-                    lgic.ItemID = txtItemID.Text.Trim();
-                    lgic.Execute();
-                    ItemType litem = lgic.Item;                    
-                    if (litem != null)
-                    {
-                        lresponse += "Item.SellingStatus.ListingStatus = " + litem.SellingStatus.ListingStatus + "\r\n" +
-                                     "End time:" + litem.ListingDetails.EndTime.ToLongDateString();
-                    }
-                    else
-                    {
-                        lresponse += "--- NO ITEM FOUND ---";
-                    };
-                    */
-
-                    GetMyeBaySellingCall lgmes = new GetMyeBaySellingCall(apiContext);
-                    /*
-                    lgmes.ActiveList.Include = false;
-                    lgmes.BidList.Include = false;
-                    lgmes.DeletedFromSoldList.Include = false;
-                    lgmes.DeletedFromUnsoldList.Include = false;
-                    lgmes.ScheduledList.Include = false;
-                    lgmes.SellingSummary.Include = false;
-                    lgmes.SoldList.Include = false;
-                    */
-                    //lgmes.UnsoldList = new ItemListCustomizationType();
-
-                    lgmes.DetailLevelList = new DetailLevelCodeTypeCollection(new DetailLevelCodeType[] { DetailLevelCodeType.ReturnAll });
-                    int lpage = 0, lcount = 0;
-                    List<ItemType> TheUnsoldProducts = new List<ItemType>();
-                    try
-                    {
-                        do
-                        {
-                            ++lpage;
-                            txtStatus.Text += "\r\nReading page " + lpage.ToString() + "\r\n";
-                            txtStatus.Update();
-                            Application.DoEvents();
-
-                            ItemListCustomizationType lunsolds = new ItemListCustomizationType();
-                            lunsolds.Pagination = new PaginationType();
-                            lunsolds.Pagination.PageNumber = lpage;
-                            lunsolds.Pagination.EntriesPerPage = 20;
-                            lunsolds.Include = true;
-                            lunsolds.DurationInDays = 7;
-                            lunsolds.IncludeNotes = false;
-                            SellingSummaryType lst = lgmes.GetMyeBaySelling(null, null, null, lunsolds, null, null, null, null, true);
-                            lcount += lgmes.UnsoldListReturn.ItemArray.Count;
-                            TheUnsoldProducts.AddRange(lgmes.UnsoldListReturn.ItemArray.ToArray());
-                            foreach (ItemType li in lgmes.UnsoldListReturn.ItemArray)
-                            {
-                                txtStatus.Text += "\r\n " + li.ItemID + "\t " + li.Title;
-                            } // foreach
-
-                        } while (lgmes.UnsoldListReturn.PaginationResult.TotalNumberOfPages > lpage);
-                    }
-                    catch (Exception pe)
-                    {
-                        MessageBox.Show("Error: " + pe.ToString());
-                    }
-
-                    //txtStatus.Text = lresponse;
-                    MessageBox.Show("The process ended!");
-                }
-                catch (Exception pe)
-                {
-                    MessageBox.Show(pe.ToString());
-                }
-            }
-            else
-            {
-                MessageBox.Show(" PLEASE ENTER AN EBAY PRODUCT ID IN THE BOX ");
-                txtItemID.Focus();
-            } // if
-        } // btnSearch_Click
-
-        private void btnReadMarket_Click(object sender, EventArgs e)
-        {
-            currentMarketPlace = ldsMarkets[cmbMarketplace.SelectedIndex];
-            readMarketplace();
-        } // btnReadMarket_Click
-
         // ----------------------------- Service methods --------------------------------
 
         // Sort method for 2 items: by brand
@@ -477,6 +371,10 @@ namespace Publisher_Test
             berkeleyDataSetTableAdapters.bsi_postsTableAdapter lposts_da;
             berkeleyDataSetTableAdapters.bsi_quantitiesTableAdapter lqtys_da;
 
+            /*
+            berkeleyDataSetTableAdapters.bsi_variationsTableAdapter lvar_da;
+            berkeleyDataSetTableAdapters.bsi_qsandpricesTableAdapter lqs_da;
+            */
             try
             {
                 lconn = new SqlConnection(Properties.Settings.Default.berkeleyConnectionString.ToString());
@@ -490,6 +388,13 @@ namespace Publisher_Test
                 lposts_da.Connection = lconn;
                 lqtys_da.Connection = lconn;
 
+                /*
+                lvar_da = new berkeleyDataSetTableAdapters.bsi_variationsTableAdapter();
+                lqs_da = new berkeleyDataSetTableAdapters.bsi_qsandpricesTableAdapter();
+                lvar_da.Connection = lconn;
+                lqs_da.Connection = lconn;
+                */
+
                 theProducts = new List<ItemExcel>();
 
                 foreach (berkeleyDataSet.bsi_marketplacesRow lmarketPlace in ldsMarkets.Rows)
@@ -498,6 +403,21 @@ namespace Publisher_Test
 
                     if (lstop) break;
                     if (currentMarketPlace.type == ItemMarketplace.MARKETPLACE_TYPE_AMAZON) continue;
+                    /*
+                    // Get the marketplace information
+                    //foreach (marketsDataSet.marketplaceRow lmarketPlace in lmarketsTable.Rows)
+                
+                    foreach (berkeleyDataSet.bsi_marketplacesRow lmarketPlace in ldsMarkets.Rows)
+                        if (lmarketPlace.id == lmarket)
+                            currentMarketPlace = lmarketPlace;
+                
+                    _descriptionHeader = System.IO.File.ReadAllText(System.IO.Directory.GetCurrentDirectory() + "\\" + currentMarketPlace.templateHeader);
+                    _descriptionFooter = System.IO.File.ReadAllText(System.IO.Directory.GetCurrentDirectory() + "\\" + currentMarketPlace.tempateFooter);
+                     * 
+                    String llocation = Assembly.GetExecutingAssembly().Location.Replace(Assembly.GetExecutingAssembly().ManifestModule.Name, "");
+                    _descriptionHeader = System.IO.File.ReadAllText(llocation + currentMarketPlace.templateHeader);
+                    _descriptionFooter = System.IO.File.ReadAllText(llocation + currentMarketPlace.tempateFooter);                
+                    */
 
                     _descriptionHeader = currentMarketPlace.template_header;
                     _descriptionFooter = currentMarketPlace.template_footer;
@@ -510,11 +430,7 @@ namespace Publisher_Test
                     // Let's get all the posts from this marketplace 
                     theProducts = new List<ItemExcel>();
                     berkeleyDataSet.bsi_postsDataTable lposts = new berkeleyDataSet.bsi_postsDataTable();
-
-                    string po = cbSelectPO.SelectedValue.ToString();
-
-                    lposts_da.FillByUnpublished(lposts, dtPickerStart.Value, po);
-
+                    lposts_da.FillByUnpublished(lposts, dtPickerStart.Value);
                     foreach (berkeleyDataSet.bsi_postsRow lpost in lposts.Rows)
                     {
                         if ( (lpost.marketplace & lmarketPlace.maskId) == 0 ) continue;
@@ -875,40 +791,39 @@ namespace Publisher_Test
             return lvt;
         } // createVariations
 
-        private ItemType BuildItem(ItemExcel excelItem)
+        ItemType BuildItem(ItemExcel lix)
         {
             ItemType item = new ItemType();
-
+            
             // item title
-            item.Title = excelItem.Title;
+            item.Title = lix.Title;
             // item description
-            item.Description = _descriptionHeader + excelItem.Title + " " + excelItem.FullDescription + _descriptionFooter;
-            item.SKU = excelItem.SKU;
+            item.Description = _descriptionHeader + lix.Title + " " + lix.FullDescription + _descriptionFooter;
+            item.SKU = lix.SKU;
 
             // Create the picture, save the URL and then pass it to the item
             item.PictureDetails = new PictureDetailsType();
             item.PictureDetails.PhotoDisplay = PhotoDisplayCodeType.PicturePack;
             item.PictureDetails.GalleryType = GalleryTypeCodeType.Gallery;
             item.PictureDetails.PictureURL = new StringCollection();
-            foreach (String lpic in excelItem.URLPictures)
+            foreach (String lpic in lix.URLPictures)
                 item.PictureDetails.PictureURL.Add(lpic);
 
             // listing type
             BestOfferDetailsType lbo = null;
-            switch (excelItem.SellingFormat)
+            switch (lix.SellingFormat)
             {
                 case "A":
                     item.ListingType = ListingTypeCodeType.Chinese;
                     item.ListingDuration = "Days_7";
                     break;
-                case "A1":
-                    item.ListingType = ListingTypeCodeType.Chinese;
-                    item.ListingDuration = "Days_1";
-                    break;
-
                 case "A3":
                     item.ListingType = ListingTypeCodeType.Chinese;
                     item.ListingDuration = "Days_3";
+                    break;
+                case "A1":
+                    item.ListingType = ListingTypeCodeType.Chinese;
+                    item.ListingDuration = "Days_1";
                     break;
                 case "A5":
                     item.ListingType = ListingTypeCodeType.Chinese;
@@ -932,15 +847,13 @@ namespace Publisher_Test
                     break;
             }; // switch
 
-            // Start time if specified. We cannot use "lix.StartDate" because some items will be posted to be published
-            // for later times accepted by eBay
-            // if (lix.StartDate > DateTime.Now)
-            // item.ScheduleTime = (DateTime.Now).AddHours(3); // lix.StartDate;
+            // Start time if specified
+            if (lix.StartDate > DateTime.Now) item.ScheduleTime = lix.StartDate;
 
             item.HitCounter = HitCounterCodeType.BasicStyle;
 
             // item condition, New=1000, New without box=1500, New with defects=1750, Pre-owned=3000
-            switch (excelItem.Condition)
+            switch (lix.Condition)
             {
                 case "NEW": item.ConditionID = 1000; break;
                 case "NWB": item.ConditionID = 1500; break;
@@ -954,69 +867,108 @@ namespace Publisher_Test
 
             // Do not specify size nor width for products with variation. Each variation has its own specifics
             // Also, do not state size/width for watches
-            if (excelItem.Items.Count == 0 && excelItem.Category != "31387" && excelItem.Category != "63852")
+            if (lix.Items.Count == 0 && lix.Category != "31387")
             {
                 litemspec = new NameValueListType();
-                litemspec.Name = getEbaySizeName(excelItem.Gender);
-                litemspec.Value = new StringCollection(new String[] { excelItem.Size });
+                litemspec.Name = getEbaySizeName(lix.Gender);
+                litemspec.Value = new StringCollection(new String[] { lix.Size });
                 item.ItemSpecifics.Add(litemspec);
 
                 litemspec = new NameValueListType();
                 litemspec.Name = "Width";
-                String lwidth = convertWidth(excelItem.Gender, excelItem.Width);
+                String lwidth = convertWidth(lix.Gender, lix.Width);
                 litemspec.Value = new StringCollection(new String[] { lwidth });
                 item.ItemSpecifics.Add(litemspec);
             }
 
-            int ebayCategory = int.Parse(excelItem.Category);
+            int lcategory = 0;
+            if (lix.Gender == "MENS")
+            {
+                // Let's see if the category was entered as a number or as text
+                if (!Int32.TryParse(lix.Category, out lcategory))
+                {
+                    switch (lix.Category.ToUpper())
+                    {
+                        case "CASUAL": lcategory = 24087; break;
+                        case "ATHLETIC": lcategory = 15709; break;
+                        case "BOOTS": lcategory = 11498; break;
+                        case "DRESS/FORMAL": lcategory = 53120; break;
+                        case "SANDALS": lcategory = 11504; break;
+                        case "SLIPPERS": lcategory = 11505; break;
+                        default: lcategory = 63850; break; // Mixed items & lots
+                    }
+                }
+            }
+            else
+            {
+                // Let's see if the category was entered as a number or as text
+                if (lix.Gender == "WOMENS")
+                {
+                    if (!Int32.TryParse(lix.Category, out lcategory))
+                    {
+                        switch (lix.Category.ToUpper())
+                        {
+                            case "HEELS": lcategory = 55793; break;
+                            case "CASUAL": lcategory = 45333; break;
+                            case "ATHLETIC": lcategory = 95672; break;
+                            case "BOOTS": lcategory = 53557; break;
+                            case "SANDALS": lcategory = 62107; break;
+                            case "SLIPPERS": lcategory = 11632; break;
+                            case "OCCUPATIONAL": lcategory = 53548; break;
+                            default: lcategory = 63889; break; // Mixed items & lots
+                        }
+                    }
+                }
+                else
+                {
+                    if (lix.Gender == "JUNIOR")
+                        lcategory = 155202;
+                }
+            }
 
             litemspec = new NameValueListType();
             litemspec.Name = "Brand";
-            litemspec.Value = new StringCollection(new String[] { excelItem.Brand });
+            litemspec.Value = new StringCollection(new String[] { lix.Brand });
             item.ItemSpecifics.Add(litemspec);
 
             litemspec = new NameValueListType();
             litemspec.Name = "Style";
-            litemspec.Value = new StringCollection(new String[] { excelItem.Style });
+            litemspec.Value = new StringCollection(new String[] { lix.Style });
             item.ItemSpecifics.Add(litemspec);
 
-            if (!String.IsNullOrEmpty(excelItem.Color))
+            if (!String.IsNullOrEmpty(lix.Color))
             {
                 litemspec = new NameValueListType();
                 litemspec.Name = "Color";
-                litemspec.Value = new StringCollection(new String[] { excelItem.Color });
+                litemspec.Value = new StringCollection(new String[] { lix.Color });
                 item.ItemSpecifics.Add(litemspec);
             }
 
-            if (!String.IsNullOrEmpty(excelItem.Material))
+            if (!String.IsNullOrEmpty(lix.Material))
             {
                 litemspec = new NameValueListType();
-
-                if (ebayCategory != 31387)
-                {
+                if (lcategory != 31387)
                     litemspec.Name = "Material";
-                }
                 else
-                {
                     litemspec.Name = "Band Material";
-                }
-
-                litemspec.Value = new StringCollection(new String[] { excelItem.Material });
+                litemspec.Value = new StringCollection(new String[] { lix.Material });
                 item.ItemSpecifics.Add(litemspec);
             }
 
-            if (!String.IsNullOrEmpty(excelItem.Shade) && ebayCategory != 63852)
+            if (!String.IsNullOrEmpty(lix.Shade))
             {
                 litemspec = new NameValueListType();
                 litemspec.Name = "Shade";
-                litemspec.Value = new StringCollection(new String[] { excelItem.Shade });
+                litemspec.Value = new StringCollection(new String[] { lix.Shade });
                 item.ItemSpecifics.Add(litemspec);
             }
+
+            // end-of-item-specifics
 
             // listing price
             item.Currency = CurrencyCodeType.USD;
 
-            if (excelItem.Items.Count == 0) // Do not set price or quantity for products with children
+            if (lix.Items.Count == 0) // Do not set price or quantity for products with children
             {
                 item.StartPrice = new AmountType();
                 item.StartPrice.currencyID = CurrencyCodeType.USD;
@@ -1025,14 +977,13 @@ namespace Publisher_Test
                 item.Quantity = 1; // It will be overriden later, after the product creation
             }
 
-
             // item location and country
             item.Location = "Very near to you!";
             item.Country = CountryCodeType.US;
 
             // listing category
             CategoryType category = new CategoryType();
-            category.CategoryID = ebayCategory.ToString(); // Primary Category
+            category.CategoryID = lcategory.ToString(); // Primary Category
             item.PrimaryCategory = category;
 
             // Payment methods
@@ -1057,13 +1008,13 @@ namespace Publisher_Test
             item.ReturnPolicy.Description = currentMarketPlace.ReturnsPolicies;
 
             // Create item variations if necessary
-            if (excelItem.Items.Count > 0)
+            if (lix.Items.Count > 0)
             {
                 int pvariations = 0;
                 String lwidthsList = "";
-                item.Variations = createVariations(excelItem, out pvariations, out lwidthsList);
-                excelItem.Variation = pvariations;
-                excelItem.Widths = lwidthsList;
+                item.Variations = createVariations(lix, out pvariations, out lwidthsList);
+                lix.Variation = pvariations;
+                lix.Widths = lwidthsList;
 
                 // Let's see what variations were not set to set them in default
                 if ((pvariations & VARIATIONS_WIDTH) == 0)
@@ -1071,7 +1022,7 @@ namespace Publisher_Test
                     // There were sizes but not widths, then set the general width
                     litemspec = new NameValueListType();
                     litemspec.Name = "Width";
-                    String lwidth = convertWidth(excelItem.Gender, excelItem.Width);
+                    String lwidth = convertWidth(lix.Gender, lix.Width);
                     litemspec.Value = new StringCollection(new String[] { lwidth });
                     item.ItemSpecifics.Add(litemspec);
                 }
@@ -1081,7 +1032,7 @@ namespace Publisher_Test
             item.ShippingDetails = BuildShippingDetails();
 
             return item;
-        } 
+        } // BuildItem
 
         ShippingDetailsType BuildShippingDetails()
         {
@@ -1214,23 +1165,6 @@ namespace Publisher_Test
                 cmbMarketplace.DataSource = ldsMarkets;
                 cmbMarketplace.DisplayMember = "name";
                 cmbMarketplace.ValueMember = "id";
-
-
-                SqlCommand command = new SqlCommand("SELECT purchaseOrder FROM bsi_posts WHERE status = 10 AND marketplace <> 512");
-                command.Connection = lconn;
-                SqlDataReader dr = command.ExecuteReader();
-
-
-                List<string> pos = new List<string>();
-
-                while (dr.Read())
-                {
-                    pos.Add(dr.GetString(0));
-                }
-
-                cbSelectPO.DataSource = pos.Distinct().ToList();
-
-                dr.Close();
             }
             catch (Exception pe)
             {
@@ -1244,6 +1178,106 @@ namespace Publisher_Test
                 };
             }
         } // Form1_Load
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            lstop = true;
+        } // btnStop_Click
+
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            lstop = false;
+            publishProducts();
+        } // btnStart_Click
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            if (!String.IsNullOrEmpty(txtItemID.Text))
+            {
+                int lid= (int)cmbMarketplace.SelectedValue;
+
+                try
+                {
+                    String lresponse = "\r\n" + txtStatus.Text;
+                    currentMarketPlace = ldsMarkets[cmbMarketplace.SelectedIndex];
+                    GetApiContext();
+
+                    /*
+                    GetItemCall lgic = new GetItemCall(apiContext);
+                    lgic.ItemID = txtItemID.Text.Trim();
+                    lgic.Execute();
+                    ItemType litem = lgic.Item;                    
+                    if (litem != null)
+                    {
+                        lresponse += "Item.SellingStatus.ListingStatus = " + litem.SellingStatus.ListingStatus + "\r\n" +
+                                     "End time:" + litem.ListingDetails.EndTime.ToLongDateString();
+                    }
+                    else
+                    {
+                        lresponse += "--- NO ITEM FOUND ---";
+                    };
+                    */
+                    
+                    GetMyeBaySellingCall lgmes = new GetMyeBaySellingCall(apiContext);
+                    /*
+                    lgmes.ActiveList.Include = false;
+                    lgmes.BidList.Include = false;
+                    lgmes.DeletedFromSoldList.Include = false;
+                    lgmes.DeletedFromUnsoldList.Include = false;
+                    lgmes.ScheduledList.Include = false;
+                    lgmes.SellingSummary.Include = false;
+                    lgmes.SoldList.Include = false;
+                    */
+                    //lgmes.UnsoldList = new ItemListCustomizationType();
+
+                    lgmes.DetailLevelList = new DetailLevelCodeTypeCollection(new DetailLevelCodeType[] { DetailLevelCodeType.ReturnAll });
+                    int lpage = 0, lcount = 0;
+                    List<ItemType> TheUnsoldProducts = new List<ItemType>();
+                    try
+                    {
+                        do
+                        {
+                            ++lpage;
+                            txtStatus.Text += "\r\nReading page " + lpage.ToString() + "\r\n";
+                            txtStatus.Update();
+                            Application.DoEvents();
+
+                            ItemListCustomizationType lunsolds = new ItemListCustomizationType();
+                            lunsolds.Pagination = new PaginationType();
+                            lunsolds.Pagination.PageNumber = lpage;
+                            lunsolds.Pagination.EntriesPerPage = 20;
+                            lunsolds.Include = true;
+                            lunsolds.DurationInDays = 7;
+                            lunsolds.IncludeNotes = false;
+                            SellingSummaryType lst = lgmes.GetMyeBaySelling(null, null, null, lunsolds, null, null, null, null, true);
+                            lcount += lgmes.UnsoldListReturn.ItemArray.Count;
+                            TheUnsoldProducts.AddRange(lgmes.UnsoldListReturn.ItemArray.ToArray());
+                            foreach (ItemType li in lgmes.UnsoldListReturn.ItemArray)
+                            {
+                                txtStatus.Text += "\r\n " + li.ItemID + "\t " + li.Title;
+                            } // foreach
+
+                        } while (lgmes.UnsoldListReturn.PaginationResult.TotalNumberOfPages > lpage);
+                    }
+                    catch (Exception pe)
+                    {
+                        MessageBox.Show("Error: " + pe.ToString());
+                    }
+
+                    //txtStatus.Text = lresponse;
+                    MessageBox.Show("The process ended!");
+                }
+                catch (Exception pe)
+                {
+                    MessageBox.Show(pe.ToString());
+                }
+            }
+            else
+            {
+                MessageBox.Show(" PLEASE ENTER AN EBAY PRODUCT ID IN THE BOX ");
+                txtItemID.Focus();
+            } // if
+        } // btnSearch_Click
 
         private void readMarketplace()
         {
@@ -1307,6 +1341,17 @@ namespace Publisher_Test
                 MessageBox.Show(pe.ToString());
             }
         } // readMarketplace()
+
+        private void btnVerify_Click(object sender, EventArgs e)
+        {
+
+        } // btnVerify_Click
+
+        private void btnReadMarket_Click(object sender, EventArgs e)
+        {
+            currentMarketPlace = ldsMarkets[cmbMarketplace.SelectedIndex];
+            readMarketplace();
+        } // btnReadMarket_Click
 
     } // class Form1
 } // namespace Publisher_Test

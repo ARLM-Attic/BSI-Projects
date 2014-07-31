@@ -35,6 +35,7 @@
             this.txtPicturesPath = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnStart = new System.Windows.Forms.Button();
+            this.btnStartPublishing = new System.Windows.Forms.Button();
             this.txtStatus = new System.Windows.Forms.TextBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.chkPublishWOPics = new System.Windows.Forms.CheckBox();
@@ -84,6 +85,7 @@
             this.btnSearchPictures.TabIndex = 5;
             this.btnSearchPictures.Text = "Set pictures path";
             this.btnSearchPictures.UseVisualStyleBackColor = true;
+            this.btnSearchPictures.Click += new System.EventHandler(this.btnSearchPictures_Click);
             // 
             // txtPicturesPath
             // 
@@ -108,9 +110,19 @@
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(155, 54);
             this.btnStart.TabIndex = 6;
-            this.btnStart.Text = "Start";
+            this.btnStart.Text = "Initial check";
             this.btnStart.UseVisualStyleBackColor = true;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
+            // 
+            // btnStartPublishing
+            // 
+            this.btnStartPublishing.Location = new System.Drawing.Point(287, 142);
+            this.btnStartPublishing.Name = "btnStartPublishing";
+            this.btnStartPublishing.Size = new System.Drawing.Size(155, 54);
+            this.btnStartPublishing.TabIndex = 7;
+            this.btnStartPublishing.Text = "Store in database";
+            this.btnStartPublishing.UseVisualStyleBackColor = true;
+            this.btnStartPublishing.Click += new System.EventHandler(this.btnStartPublishing_Click);
             // 
             // txtStatus
             // 
@@ -185,13 +197,13 @@
             this.configurationToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.eBayPageSizeToolStripMenuItem});
             this.configurationToolStripMenuItem.Name = "configurationToolStripMenuItem";
-            this.configurationToolStripMenuItem.Size = new System.Drawing.Size(93, 20);
+            this.configurationToolStripMenuItem.Size = new System.Drawing.Size(84, 20);
             this.configurationToolStripMenuItem.Text = "Configuration";
             // 
             // eBayPageSizeToolStripMenuItem
             // 
             this.eBayPageSizeToolStripMenuItem.Name = "eBayPageSizeToolStripMenuItem";
-            this.eBayPageSizeToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.eBayPageSizeToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
             this.eBayPageSizeToolStripMenuItem.Text = "eBay Page Size";
             this.eBayPageSizeToolStripMenuItem.Click += new System.EventHandler(this.eBayPageSizeToolStripMenuItem_Click);
             // 
@@ -217,6 +229,7 @@
             this.Controls.Add(this.btnUpdateMarketplaces);
             this.Controls.Add(this.chkPublishWOPics);
             this.Controls.Add(this.txtStatus);
+            this.Controls.Add(this.btnStartPublishing);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.btnSearchPictures);
             this.Controls.Add(this.txtPicturesPath);
@@ -247,6 +260,7 @@
         private System.Windows.Forms.TextBox txtPicturesPath;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnStart;
+        private System.Windows.Forms.Button btnStartPublishing;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.CheckBox chkPublishWOPics;

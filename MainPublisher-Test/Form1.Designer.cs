@@ -40,8 +40,6 @@
             this.label3 = new System.Windows.Forms.Label();
             this.btnVerify = new System.Windows.Forms.Button();
             this.btnReadMarket = new System.Windows.Forms.Button();
-            this.cbSelectPO = new System.Windows.Forms.ComboBox();
-            this.lbSelectPO = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -65,11 +63,11 @@
             this.txtStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtStatus.Location = new System.Drawing.Point(12, 94);
+            this.txtStatus.Location = new System.Drawing.Point(12, 38);
             this.txtStatus.Multiline = true;
             this.txtStatus.Name = "txtStatus";
             this.txtStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtStatus.Size = new System.Drawing.Size(883, 586);
+            this.txtStatus.Size = new System.Drawing.Size(883, 642);
             this.txtStatus.TabIndex = 2;
             // 
             // btnStart
@@ -155,6 +153,7 @@
             this.btnVerify.TabIndex = 10;
             this.btnVerify.Text = "Verify Qtys";
             this.btnVerify.UseVisualStyleBackColor = true;
+            this.btnVerify.Click += new System.EventHandler(this.btnVerify_Click);
             // 
             // btnReadMarket
             // 
@@ -167,30 +166,11 @@
             this.btnReadMarket.UseVisualStyleBackColor = true;
             this.btnReadMarket.Click += new System.EventHandler(this.btnReadMarket_Click);
             // 
-            // cbSelectPO
-            // 
-            this.cbSelectPO.FormattingEnabled = true;
-            this.cbSelectPO.Location = new System.Drawing.Point(109, 49);
-            this.cbSelectPO.Name = "cbSelectPO";
-            this.cbSelectPO.Size = new System.Drawing.Size(163, 28);
-            this.cbSelectPO.TabIndex = 12;
-            // 
-            // lbSelectPO
-            // 
-            this.lbSelectPO.AutoSize = true;
-            this.lbSelectPO.Location = new System.Drawing.Point(12, 52);
-            this.lbSelectPO.Name = "lbSelectPO";
-            this.lbSelectPO.Size = new System.Drawing.Size(80, 20);
-            this.lbSelectPO.TabIndex = 13;
-            this.lbSelectPO.Text = "Select PO";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(907, 758);
-            this.Controls.Add(this.lbSelectPO);
-            this.Controls.Add(this.cbSelectPO);
             this.Controls.Add(this.btnReadMarket);
             this.Controls.Add(this.btnVerify);
             this.Controls.Add(this.label3);
@@ -227,8 +207,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnVerify;
         private System.Windows.Forms.Button btnReadMarket;
-        private System.Windows.Forms.ComboBox cbSelectPO;
-        private System.Windows.Forms.Label lbSelectPO;
     }
 }
 

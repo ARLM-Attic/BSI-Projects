@@ -65,10 +65,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="eBay.Service">
-      <HintPath>..\eBay.Service.dll</HintPath>
+      <HintPath>..\..\..\Program Files\eBay\eBay .NET SDK v735 Point Release\eBay.Service.dll</HintPath>
     </Reference>
     <Reference Include="eBay.Service.SDK.Attribute">
-      <HintPath>..\eBay.Service.SDK.Attribute.dll</HintPath>
+      <HintPath>..\..\..\Program Files\eBay\eBay .NET SDK v735 Point Release\eBay.Service.SDK.Attribute.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -106,19 +106,19 @@ namespace BSI_InventoryPreProcessor
 
         private uint[] MarketPlaces = { ItemMarketplace.MARKETPLACE_AMAZON, 
                                         ItemMarketplace.MARKETPLACE_AMAZON_HARVARD, 
+                                        
                                         ItemMarketplace.MARKETPLACE_EBAY_MECALZO,
                                         ItemMarketplace.MARKETPLACE_EBAY_1MS,
                                         ItemMarketplace.MARKETPLACE_EBAY_PAS,
                                         ItemMarketplace.MARKETPLACE_EBAY_SA,
-                                        ItemMarketplace.MARKETPLACE_WEB_SF };
 
-        //Boolean lstop;
+                                        ItemMarketplace.MARKETPLACE_WEB_SF
+                                      };
+
+        Boolean lstop;
 
         int gCurrentMarketplace = 0;
-
-        List<ItemExcel> _entries;
-        List<ItemExcel> _errors;
-        List<ItemExcel> _completed;
+        List<ItemExcel> theProducts;
 
         // Products on the marketplaces. Each element is a marketplace
         List<ItemType>[] itemsOnline = new List<ItemType>[12];
@@ -131,59 +131,16 @@ namespace BSI_InventoryPreProcessor
             InitializeComponent();            
         }  // public Form1()
 
-        private void btnStart_Click(object sender, EventArgs e)
-        {
-            if (String.IsNullOrEmpty(txtOriginalFile.Text.Trim()))
-            {
-                MessageBox.Show("Please select the original Excel file with the inventory to add");
-                txtOriginalFile.Focus();
-                return;
-            }
-
-            if (String.IsNullOrEmpty(txtPicturesPath.Text.Trim()))
-            {
-                MessageBox.Show("Please specify the path where the pictures are stored");
-                txtPicturesPath.Focus();
-                return;
-            }
-
-            if (MessageBox.Show("ABOUT TO PUBLISH PRODUCTS FOR \r\n\r\n" + cmbMarkets.Text + "\r\n\r\nREADY TO PROCEED?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == System.Windows.Forms.DialogResult.No)
-                return;
-
-            // Everything is okay to go
-            lorginalpathfile = txtOriginalFile.Text.Trim();
-            lpicturespath = txtPicturesPath.Text.Trim();
-
-            btnStart.Enabled = false;
-
-            _entries = new List<ItemExcel>();
-            _errors = new List<ItemExcel>();
-            _completed = new List<ItemExcel>();
-
-            currentMarketPlace = ldsMarkets[cmbMarkets.SelectedIndex];
-
-            ReadExcelEntries(lorginalpathfile);
-
-            CheckAvailablePictures();
-
-            //if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
-            //{
-            //    UpdateMarketplaces();
-            //}
-
-            PublishProducts();
-
-            MessageBox.Show("Process ended with " + _entries.Count + " products");
-
-        } 
-
-
         private void btnSearch_Click(object sender, EventArgs e)
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
                 lorginalpathfile = openFileDialog1.FileName;
             txtOriginalFile.Text = lorginalpathfile;
         } // btnSearch_Click
+
+        private void btnSearchPictures_Click(object sender, EventArgs e)
+        {
+        } // btnSearchPictures_Click
 
         private string removeSize(string ltext)
         {
@@ -245,7 +202,7 @@ namespace BSI_InventoryPreProcessor
             return lsb.ToString();
         } // removeSize
 
-        private void UpdateMarketplaces()
+        private void updateMarketplaces()
         {
             // lmktindex starts in 1 cause 0=Amazon, 1=AMZ-HarvardStation, 2=Mecalzo, 3=1MS, 4=PickAShoe, 5=Shoefestival.com
             if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX )
@@ -319,46 +276,252 @@ namespace BSI_InventoryPreProcessor
                              txtStatus.Text;
         } // updateMarketplaces
 
-        
-
-        private void ReadExcelEntries(string path)
+        private void btnStart_Click(object sender, EventArgs e)
         {
-            Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
-            Microsoft.Office.Interop.Excel.Workbook theWorkbook = excelApp.Workbooks.Open(path, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true);
-            Microsoft.Office.Interop.Excel._Worksheet workSheet = (Microsoft.Office.Interop.Excel._Worksheet)theWorkbook.ActiveSheet;
+            if (String.IsNullOrEmpty(txtOriginalFile.Text.Trim()))
+            {
+                MessageBox.Show("Please select the original Excel file with the inventory to add");
+                txtOriginalFile.Focus();
+                return;
+            }
+            
+            if (String.IsNullOrEmpty(txtPicturesPath.Text.Trim()))
+            {
+                MessageBox.Show("Please specify the path where the pictures are stored");
+                txtPicturesPath.Focus();
+                return;
+            }
 
+            if (MessageBox.Show("ABOUT TO PUBLISH PRODUCTS FOR \r\n\r\n" + cmbMarkets.Text + "\r\n\r\nREADY TO PROCEED?", "Confirmation", MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2) == System.Windows.Forms.DialogResult.No)
+                return;
+
+            // Everything is okay to go
+            lorginalpathfile = txtOriginalFile.Text.Trim();
+            lpicturespath = txtPicturesPath.Text.Trim();
+
+            var excelApp = new Microsoft.Office.Interop.Excel.Application();
+
+            Microsoft.Office.Interop.Excel.Workbook theWorkbook = excelApp.Workbooks.Open(lorginalpathfile, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true);
+            /*
+            excelApp.Workbooks.Open(lorginalpathfile, 0, true, 5,
+            "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows,
+            "\t", false, false,0, true);
+            */
+            Microsoft.Office.Interop.Excel._Worksheet workSheet = (Microsoft.Office.Interop.Excel._Worksheet)theWorkbook.ActiveSheet; // (Excel.Worksheet)excelApp.ActiveSheet;
+
+            btnStart.Enabled = false;
+            ItemExcel lcurrentItem = null;
+            int lcurrRow = 2, lmarketplace = 0;
+            lstop = false;
+            String lsku = "", lcurrentSku = "", lbrand = "";
+            theProducts = new List<ItemExcel>();
             currentMarketPlace = ldsMarkets[cmbMarkets.SelectedIndex];
 
-            List<ItemExcel> items = new List<ItemExcel>();
-
-            bool stop = false;
-            int currentRow = 2;
-
-            while (!stop)
+            using (SqlConnection lconn = new SqlConnection(Properties.Settings.Default.berkeleyConnectionString.ToString()))
             {
-                Microsoft.Office.Interop.Excel.Range range = workSheet.get_Range(EXCEL_COLUMN_INITIAL + currentRow.ToString(), EXCEL_COLUMN_FINAL + currentRow.ToString());
-                System.Array row = (System.Array)range.Cells.Value;
-
-                string firstCol = Convert.ToString(row.GetValue(1, 1));
-
-                if (!String.IsNullOrEmpty(firstCol))
+                try
                 {
-                    try
+                    lconn.Open();
+                    while (!lstop)
                     {
-                        items.Add(CreateEntry(row));
-                    }
-                    catch (Exception)
-                    {
-                        _errors.Add( new ItemExcel() {  ItemLookupCode = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_LOOKUPCODE)), Result = "Unable to read row" } );
-                    }
-                }
-                else
-                {
-                    stop = true;
-                }
+                        ItemExcel lix = new ItemExcel();
+                        Decimal laux = 0; int lauxi = 0, lqtyreceived = 0;
+                        String lauxS = "";
 
-                currentRow++;
-            }
+                        Microsoft.Office.Interop.Excel.Range range = workSheet.get_Range(EXCEL_COLUMN_INITIAL + lcurrRow.ToString(),
+                                                                EXCEL_COLUMN_FINAL + lcurrRow.ToString());
+                        System.Array myvalues = (System.Array)range.Cells.Value;
+                        lbrand = Convert.ToString(myvalues.GetValue(1, 1)); // "myvalues" is a 2-D array (no matter if the range was from one single row)
+
+                        if (!String.IsNullOrEmpty(lbrand))
+                        {
+                            // Read the rest of the line
+
+                            lsku = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_SKU));
+
+                            // Read the individual information. This will be different for each item no matter it belongs to a father-children
+                            lix.SKU = lsku;
+                            lix.purchaseOrder = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PO));
+                            lix.listUser = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_LISTUSER));
+
+                            lix.ItemLookupCode = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_LOOKUPCODE));
+                            lix.Title = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_TITLE));
+                            lix.Size = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_SIZE));
+                            lix.Width = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_WIDTH));
+
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_RECEIVED)), out lauxi);
+                            lqtyreceived = lauxi;
+                    
+                            int ltotal2publish = 0;
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QUANTITY)), out lauxi);
+                            lix.Quantity = lauxi; ltotal2publish += lauxi;
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE)), out laux);
+                            lix.Price = laux;
+
+                            /* 2013-01-02
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QTY_AMAZON)), out lauxi);
+                            lix.QtyA1 = lauxi; ltotal2publish += lauxi;
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QTY_HARVARD)), out lauxi);
+                            lix.QtyA2 = lauxi; ltotal2publish += lauxi;
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QTY_MECALZO)), out lauxi);
+                            lix.QtyE1 = lauxi; ltotal2publish += lauxi;
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QTY_1MS)), out lauxi);
+                            lix.QtyE2 = lauxi; ltotal2publish += lauxi;
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QTY_PAS)), out lauxi);
+                            lix.QtyE3 = lauxi; ltotal2publish += lauxi;
+                            Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_QTY_SA)), out lauxi);
+                            lix.QtyE4 = lauxi; ltotal2publish += lauxi;
+
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE_AMAZON)), out laux);
+                            lix.PriceA1 = laux; if (laux > 0) lmarketplace = 1;
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE_HARVARD)), out laux);
+                            lix.PriceA2 = laux; if (laux > 0) lmarketplace = 2;
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE_MECALZO)), out laux);
+                            lix.PriceE1 = laux; if (laux > 0) lmarketplace = 16;
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE_1MS)), out laux);
+                            lix.PriceE2 = laux; if (laux > 0) lmarketplace = 32;
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE_PAS)), out laux);
+                            lix.PriceE3 = laux; if (laux > 0) lmarketplace = 64;
+                            Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_PRICE_SA)), out laux);
+                            lix.PriceE4 = laux; if (laux > 0) lmarketplace = 128;
+                            */
+
+                            lix.MarketPlaces = (uint)currentMarketPlace.maskId;
+
+                            bool loverpublished = false;
+                            if (ltotal2publish > lqtyreceived)
+                            {
+                                loverpublished = true;
+                            }
+                            else
+                            {
+                                /*
+                                String lqs = "SELECT SUM(quantity) AS totalQ FROM bsi_quantities where purchaseorder='" + 
+                                             lix.purchaseOrder + "' AND itemlookupcode='" + lix.ItemLookupCode + "'";
+                                SqlCommand lc = new SqlCommand(lqs,lconn);
+                                SqlDataReader lr = lc.ExecuteReader();
+                                if ( lr.Read() )
+                                {
+                                    int lq = 0;
+                                    String lqS = lr["totalQ"].ToString();
+                                    Int32.TryParse(lqS, out lq);
+                                    loverpublished = ( (lq + ltotal2publish) > lqtyreceived );
+                                }
+                                lr.Close();
+                                */
+                            }
+
+                            if ( loverpublished )
+                            {
+                                MessageBox.Show("\r\n\r\n THE SKU:" + 
+                                                lix.ItemLookupCode + 
+                                                " IS TRYING TO PUBLISH MORE PRODUCTS THAN IT RECEIVED.\r\n" +
+                                                "   CHECK THE LISTING, FIX THE PROBLEM AND TRY AGAIN. \r\n\r\n", 
+                                                "Error in quantities");
+                                return;
+                            }
+                        }
+                        else
+                            lsku = "";
+
+                        if (lsku.CompareTo(lcurrentSku) != 0)
+                        {
+                            if (!String.IsNullOrEmpty(lbrand))
+                            {
+                                // Change of SKU
+                                // if (lcurrentItem != null) lcurrentItem.checkMarketPlaces();
+                                // if (lcurrentItem != null) lcurrentItem.MarketPlaces = (uint)currentMarketPlace.maskId; // Cambio 2013-01-02
+
+                                lcurrentSku = lsku;
+                                lcurrentItem = new ItemExcel(lix); // The new current item is the the one that's being read. Get its current attributes
+
+                                lcurrentItem.SKU = lsku;
+                                lcurrentItem.Alias = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_UPC)).Trim();
+                                lcurrentItem.Brand = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_BRAND)).Trim();
+                                lcurrentItem.Condition = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_CONDITION)).ToUpper().Trim();
+                                if (String.IsNullOrEmpty(lcurrentItem.Condition))
+                                    lcurrentItem.Condition = "NEW";
+
+                                lcurrentItem.Category = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_CATEGORY)).Trim();
+                                Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_COST)).Trim(), out laux); lcurrentItem.Cost = laux;
+
+                                lcurrentItem.FullDescription = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_FULLD)).Trim();
+                                lauxS = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_GENDER)).ToUpper().Trim();
+                                if (lauxS == "MEN") lauxS = "MENS";
+                                if (lauxS == "WOMEN") lauxS = "WOMENS";
+                                if (lauxS == "JUNIORS") lauxS = "JUNIOR";
+                                lcurrentItem.Gender = lauxS;
+
+                                lcurrentItem.Keywords = properNameString(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_KEYWORDS))).Trim();
+
+                                lcurrentItem.Material = properNameString(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_MATERIAL))).Trim();
+                                lcurrentItem.Color = properNameString(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_COLOR))).Trim();
+                                lcurrentItem.Shade = properNameString(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_SHADE))).Trim();
+                                lcurrentItem.HeelHeight = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_HEEL)).Trim();
+
+                                Decimal.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_MSRP)).Trim(), out laux);
+                                lcurrentItem.MSRP = laux;
+
+                                Int32.TryParse(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_RECEIVED)), out lauxi);
+                                lcurrentItem.Received = lauxi;
+
+                                lcurrentItem.RMS_Description = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_RMSDESCRIPTION)).Trim();
+                                lcurrentItem.Size = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_SIZE));
+                                lcurrentItem.Width = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_WIDTH));
+                                lcurrentItem.Style = properNameString(Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_STYLE))).Trim();
+
+                                lcurrentItem.SellingFormat = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_SELLINGFORMAT)).ToUpper().Trim();
+                                if (String.IsNullOrEmpty(lcurrentItem.SellingFormat))
+                                    lcurrentItem.SellingFormat = "GTC";
+
+                                String ldateS = Convert.ToString(myvalues.GetValue(1, EXCEL_INTCOLUMN_STARTDATE));
+                                lcurrentItem.StartDate = new DateTime(1900, 1, 1);
+                                if (!String.IsNullOrEmpty(ldateS))
+                                {
+                                    lcurrentItem.StartDate = DateTime.Parse(ldateS);
+                                    lcurrentItem.StartDate = lcurrentItem.StartDate.AddHours(7); // Add 7 hours to convert from PDT to GMT
+                                };
+
+                                DateTime lendDate = new DateTime();
+                                switch (lcurrentItem.SellingFormat)
+                                {
+                                    case "A": lendDate = lcurrentItem.StartDate.AddDays(7); break;
+                                    case "A1": lendDate = lcurrentItem.StartDate.AddDays(1); break;
+                                    case "A3": lendDate = lcurrentItem.StartDate.AddDays(3); break;
+                                    case "A5": lendDate = lcurrentItem.StartDate.AddDays(5); break;
+                                    case "BIN": lendDate = lcurrentItem.StartDate.AddDays(30); break;
+                                    case "GTC": lendDate = new DateTime(2020, 12, 25); break;
+                                } // switch
+                                lcurrentItem.EndDate = lendDate;
+                                theProducts.Add(lcurrentItem);
+                            }
+                            else
+                            {
+                                lstop = true;
+                                // if ( lcurrentItem.Items.Count > 0 ) theProducts.Add(lcurrentItem);
+                            }
+                        }
+                        else
+                        {
+                            if (lcurrentItem != null)
+                            {
+                                lcurrentItem.Type = ItemExcel.ITEM_TYPE_PARENT;
+                                if (lcurrentItem.Items.Count == 0) lcurrentItem.Items.Add(lcurrentItem); // Add itself as first item 
+                                lcurrentItem.Items.Add(lix);
+                            };
+                        };
+                        ++lcurrRow;
+                    } // while
+                }
+                catch(Exception pe)
+                {
+                    MessageBox.Show(pe.ToString());
+                }
+            } // using
+
+
+            //if (theProducts.Last<ItemExcel>().Items.Count > 0)
+            //    theProducts.Last<ItemExcel>().checkMarketPlaces();
 
             theWorkbook.Close();
             excelApp.Quit();
@@ -366,143 +529,65 @@ namespace BSI_InventoryPreProcessor
             releaseObject(theWorkbook);
             releaseObject(excelApp);
 
-            var variations = items.Where(p => p.SellingFormat.Equals("GTC") || p.SellingFormat.Equals("BIN")).GroupBy(p => p.SKU);
-            var auctions = items.Where(p => p.SellingFormat.Contains("A"));
+            // Sort theProducts by brand
+            theProducts.Sort(sortItems);
 
-            foreach (var variation in variations)
-            {
-                if (variation.Count() > 1)
-                {
-                    ItemExcel parent = variation.First();
-                    parent.Items.AddRange(variation.ToList());
-
-                    _entries.Add(parent);
-                }
-                else
-                {
-                    _entries.Add(variation.First());
-                }
-                
-            }
-
-            _entries.AddRange(auctions);
-
-        }
-
-        private ItemExcel CreateEntry(System.Array row)
-        {
-            ItemExcel excelItem = new ItemExcel();
-            excelItem.SKU = row.GetValue(1, EXCEL_INTCOLUMN_SKU).ToString();
-            excelItem.Alias = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_UPC)).Trim();
-            excelItem.Brand = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_BRAND)).Trim();
-            excelItem.Condition = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_CONDITION)).ToUpper().Trim();
-            excelItem.Category = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_CATEGORY)).Trim();
-            excelItem.FullDescription = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_FULLD)).Trim();
-            excelItem.Cost = decimal.Parse(row.GetValue(1, EXCEL_INTCOLUMN_COST).ToString());
-            excelItem.Price = decimal.Parse(row.GetValue(1, EXCEL_INTCOLUMN_PRICE).ToString());
-            excelItem.Quantity = int.Parse(row.GetValue(1, EXCEL_INTCOLUMN_QUANTITY).ToString());
-            excelItem.Gender = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_GENDER)).ToUpper().Trim();
-            excelItem.Keywords = properNameString(Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_KEYWORDS))).Trim();
-            excelItem.Material = properNameString(Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_MATERIAL))).Trim();
-            excelItem.Color = properNameString(Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_COLOR))).Trim();
-            excelItem.Shade = properNameString(Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_SHADE))).Trim();
-            //excelItem.HeelHeight = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_HEEL)).Trim();
-            //excelItem.MSRP = decimal.Parse(row.GetValue(1, EXCEL_INTCOLUMN_MSRP).ToString());
-            excelItem.Received = int.Parse(row.GetValue(1, EXCEL_INTCOLUMN_RECEIVED).ToString());
-            excelItem.RMS_Description = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_RMSDESCRIPTION)).Trim();
-            excelItem.Size = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_SIZE));
-            excelItem.Width = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_WIDTH));
-            excelItem.Style = properNameString(Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_STYLE))).Trim();
-            excelItem.SellingFormat = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_SELLINGFORMAT)).ToUpper().Trim();
-            excelItem.ItemLookupCode = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_LOOKUPCODE));
-            excelItem.Title = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_TITLE));
-            excelItem.purchaseOrder = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_PO));
-            excelItem.listUser = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_LISTUSER));
-
-            excelItem.MarketPlaces = (uint)currentMarketPlace.maskId;
-
-            if (String.IsNullOrEmpty(excelItem.Condition))
-            {
-                excelItem.Condition = "NEW";
-            }
-
-            string dateString = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_STARTDATE));
-
-            if (!String.IsNullOrEmpty(dateString))
-            {
-                excelItem.StartDate = DateTime.Parse(dateString);
-                excelItem.StartDate = excelItem.StartDate.ToUniversalTime(); // Add 7 hours to convert from PDT to GMT
-            };
-
-            switch (excelItem.SellingFormat)
-            {
-                case "A": excelItem.EndDate = excelItem.StartDate.AddDays(7); break;
-                case "A1": excelItem.EndDate = excelItem.StartDate.AddDays(1); break;
-                case "A3": excelItem.EndDate = excelItem.StartDate.AddDays(3); break;
-                case "A5": excelItem.EndDate = excelItem.StartDate.AddDays(5); break;
-                case "BIN": excelItem.EndDate = excelItem.StartDate.AddDays(30); break;
-                case "GTC": excelItem.EndDate = new DateTime(2020, 12, 25); break;
-            }
-
-            return excelItem;
-        }
-
-        private void CheckAvailablePictures()
-        {
             // Now, it is time to look for the pictures
             DirectoryInfo ldi;
             FileInfo[] ldirEntries = new FileInfo[] { }; ;
 
             bool lflag = true;
-
-            foreach (ItemExcel lxi in _entries)
+            foreach (ItemExcel lxi in theProducts)
             {
-                try
+                // Let's see how many pictures are available
+                String lpath = this.txtPicturesPath.Text + '\\' + lxi.Brand;
+
+                ldi = new DirectoryInfo(lpath);
+                ldirEntries = ldi.GetFiles(lxi.SKU + "*.jpg");
+                foreach (FileInfo lfi in ldirEntries)
                 {
-                    // Let's see how many pictures are available
-                    String lpath = this.txtPicturesPath.Text + '\\' + lxi.Brand;
+                    byte[] lfilecontents = File.ReadAllBytes(lfi.FullName);
+                    if (lfilecontents.Length > 0) lxi.Pictures.Add(lfi.FullName);
+                } // foreach
 
-                    ldi = new DirectoryInfo(lpath);
-                    ldirEntries = ldi.GetFiles(lxi.SKU + "*.jpg");
-                    foreach (FileInfo lfi in ldirEntries)
-                    {
-                        byte[] lfilecontents = File.ReadAllBytes(lfi.FullName);
-                        if (lfilecontents.Length > 0) lxi.Pictures.Add(lfi.FullName);
-                    } // foreach
-
-                    if (lxi.Pictures.Count > 0)
-                    {
-                        lxi.Ok2Publish = true;
-                        lxi.Pictures.Sort();
-                    }
-                    else
-                    {
-                        lxi.Ok2Publish = false;
-                        lflag = false;
-                        lxi.Result = "no pictures found !";
-                        _errors.Add(lxi);
-                    }
-
-                    txtStatus.Text = "Style " + lxi.ItemLookupCode + " has " + lxi.Pictures.Count + " pictures\r\n" + txtStatus.Text;
-                    txtStatus.Update();
+                if (lxi.Pictures.Count > 0 )
+                {
+                    lxi.Ok2Publish = true;
+                    lxi.Pictures.Sort();
                 }
-                catch (Exception e)
+                else
                 {
-                    lxi.Result = e.Message;
                     lxi.Ok2Publish = false;
-                    _errors.Add(lxi);
+                    lflag = false;
                 }
+
+                txtStatus.Text = "Style " + lxi.ItemLookupCode + " has " + lxi.Pictures.Count + " pictures\r\n" + txtStatus.Text;
+                txtStatus.Update();
             } // foreach
 
-            MessageBox.Show("\n\nPLEASE VERIFY THE STATUS OF THE INITIAL VERIFICATION AND PROCEED\nTO SAVE PRODUCTS IN OUR DATABASES IF EVERYTHING IS CORRECT\n\n", "PROCESSING FINISHED");
+            if (!lflag && (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX) )
+            {
+                // We cannot publish on eBay if there's one item without pics
+                MessageBox.Show("\r\nAT LEAST ONE ITEM DOES NOT HAVE PICTURES. PLEASE CHECK THE LIST AND TRY AGAIN.\r\n" +
+                                "You won't be able to publish on any eBay market without pictures.\r\n");
+            }
+            else
+            {
+                btnStartPublishing.Enabled = true;
+                MessageBox.Show("\n\nPLEASE VERIFY THE STATUS OF THE INITIAL VERIFICATION AND PROCEED\nTO SAVE PRODUCTS IN OUR DATABASES IF EVERYTHING IS CORRECT\n\n", "PROCESSING FINISHED");
+            }
+        } // btnStart_Click
 
-            //if (!lflag && (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX))
-            //{
-            //    // We cannot publish on eBay if there's one item without pics
-            //    MessageBox.Show("\r\nAT LEAST ONE ITEM DOES NOT HAVE PICTURES. PLEASE CHECK THE LIST AND TRY AGAIN.\r\n" +
-            //                    "You won't be able to publish on any eBay market without pictures.\r\n");
-            //}
-        }
+        private void btnStartPublishing_Click(object sender, EventArgs e)
+        {
+            btnStartPublishing.Enabled = false;
+            if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
+            {
+                updateMarketplaces();
+            }
+            publishProducts();
+            MessageBox.Show("Process ended with " + theProducts.Count + " products");
+        } // btnStartPublishing_Click
 
         // ------------------------------------------ Service methods
 
@@ -661,8 +746,9 @@ namespace BSI_InventoryPreProcessor
             return apiContext;
         } // GetApiContext
 
-        private void PublishProducts()
+        private void publishProducts()
         {
+            // Let's publish products by marketplace
             uint[] mktPlaces = { 
                                    ItemMarketplace.MARKETPLACE_AMAZON, 
                                    ItemMarketplace.MARKETPLACE_AMAZON_HARVARD, 
@@ -673,13 +759,22 @@ namespace BSI_InventoryPreProcessor
                                    ItemMarketplace.MARKETPLACE_WEB_SF
                                };
 
-            bool lstop = false;
+            // SqlCeDataAdapter lda = new SqlCeDataAdapter("select * from marketplace", ConfigurationManager.ConnectionStrings["ProcessInventory.Properties.Settings.marketsConnectionString"].ToString());
+            // marketsDataSet.marketplaceDataTable lmarketsTable = new marketsDataSet.marketplaceDataTable();
+            // lda.Fill(lmarketsTable);
+            // lda.Dispose();
+
+            lstop = false;
+            // foreach (uint lmarket in mktPlaces)
 
             SqlConnection lconn = null;
             berkeleyDataSetTableAdapters.bsi_postingTableAdapter lda;
             berkeleyDataSetTableAdapters.bsi_postsTableAdapter lposts_da;
             berkeleyDataSetTableAdapters.bsi_quantitiesTableAdapter lqtys_da;
-
+            /*
+            berkeleyDataSetTableAdapters.bsi_variationsTableAdapter lvar_da;
+            berkeleyDataSetTableAdapters.bsi_qsandpricesTableAdapter lqs_da;
+            */
             try
             {
                 lconn = new SqlConnection(Properties.Settings.Default.berkeleyConnectionString.ToString());
@@ -689,20 +784,44 @@ namespace BSI_InventoryPreProcessor
                 lposts_da = new berkeleyDataSetTableAdapters.bsi_postsTableAdapter();
                 lqtys_da = new berkeleyDataSetTableAdapters.bsi_quantitiesTableAdapter();
 
+                // lvar_da = new berkeleyDataSetTableAdapters.bsi_variationsTableAdapter();
+                // lqs_da = new berkeleyDataSetTableAdapters.bsi_qsandpricesTableAdapter();
                 lda.Connection = lconn;
                 lposts_da.Connection = lconn;
                 lqtys_da.Connection = lconn;
 
+                // lvar_da.Connection = lconn;
+                // lqs_da.Connection = lconn;
+
+                // foreach (berkeleyDataSet.bsi_marketplacesRow lmarketPlace in ldsMarkets.Rows)
                 {
+                    // currentMarketPlace = (berkeleyDataSet.bsi_marketplacesRow)ldsMarkets.Rows[0]; // lmarketPlace;
                     currentMarketPlace = (berkeleyDataSet.bsi_marketplacesRow)ldsMarkets.Rows[cmbMarkets.SelectedIndex]; // lmarketPlace;
                     GetApiContext();
+
+                    //if (lstop) break;
+                    /*
+                    // Get the marketplace information
+                    //foreach (marketsDataSet.marketplaceRow lmarketPlace in lmarketsTable.Rows)
+                
+                    foreach (berkeleyDataSet.bsi_marketplacesRow lmarketPlace in ldsMarkets.Rows)
+                        if (lmarketPlace.id == lmarket)
+                            currentMarketPlace = lmarketPlace;
+                
+                    _descriptionHeader = System.IO.File.ReadAllText(System.IO.Directory.GetCurrentDirectory() + "\\" + currentMarketPlace.templateHeader);
+                    _descriptionFooter = System.IO.File.ReadAllText(System.IO.Directory.GetCurrentDirectory() + "\\" + currentMarketPlace.tempateFooter);
+                     * 
+                    String llocation = Assembly.GetExecutingAssembly().Location.Replace(Assembly.GetExecutingAssembly().ManifestModule.Name, "");
+                    _descriptionHeader = System.IO.File.ReadAllText(llocation + currentMarketPlace.templateHeader);
+                    _descriptionFooter = System.IO.File.ReadAllText(llocation + currentMarketPlace.tempateFooter);                
+                    */
 
                     _descriptionHeader = currentMarketPlace.template_header;
                     _descriptionFooter = currentMarketPlace.template_footer;
 
                     //txtStatus.Text = "Publishing products for " + currentMarketPlace.name + "\r\n" + txtStatus.Text;
                     txtStatus.Update();
-                    foreach (ItemExcel xlProduct in _entries)
+                    foreach (ItemExcel xlProduct in theProducts)
                     {
                         //if ((xlProduct.MarketPlaces & currentMarketPlace.maskId) == 0) continue; // Skip items that do not belong to this marketplace
                         if (!xlProduct.Ok2Publish && !this.chkPublishWOPics.Checked ) continue;
@@ -727,6 +846,13 @@ namespace BSI_InventoryPreProcessor
                                   "on theQ.postid = thePost.id " +
                                   "where thePost.purchaseorder=@ppo AND thePost.sku=@psku AND " +
                                   "thePost.sellingFormat=@psf AND thePost.marketplace=@pmkt AND theQ.itemlookupcode='" + xlProduct.ItemLookupCode + "' ";
+                            /*
+                            lqs = "SELECT thePost.id, thePost.purchaseorder, thePost.sku, thePost.sellingformat, " + 
+                                  "thePost.marketplace from bsi_posts AS thePost " + 
+                                  "inner join bsi_quantities AS theQ on theQ.postid=thePost.id " + 
+                                  "WHERE thePost.purchaseorder=@ppo AND thePost.sku=@psku AND " + 
+                                  "thePost.sellingFormat=@psf AND thePost.marketplace=@pmkt";
+                            */
                         }
                         else
                         {
@@ -750,18 +876,17 @@ namespace BSI_InventoryPreProcessor
                         }
 
                         // First, let's process the product to clean it and see if it is duplicated
-                        //if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
-                        //    isTheProductOnEbay(xlProduct);
-
-                        //else
-                        //{
-                        //    if (cmbMarkets.SelectedIndex < EBAY_STARTINGINDEX)
-                        //    {
-                        //        //isTheProductOnAmazon(xlProduct);
-                        //    }
-                        //    else
-                        //        isTheProductOnWebsite(xlProduct);
-                        //}
+                        if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
+                            isTheProductOnEbay(xlProduct);
+                        else
+                        {
+                            if (cmbMarkets.SelectedIndex < EBAY_STARTINGINDEX)
+                            {
+                                //isTheProductOnAmazon(xlProduct);
+                            }
+                            else
+                                isTheProductOnWebsite(xlProduct);
+                        }
 
                         txtStatus.Text = "Publishing " + xlProduct.Title + " [" + 
                                          xlProduct.ItemLookupCode + " | " + xlProduct.SellingFormat + 
@@ -775,7 +900,22 @@ namespace BSI_InventoryPreProcessor
                             // Set a price and Q temporal
                             lproduct.Quantity = 1;
                             lproduct.StartPrice.Value = 99.99;
-
+                         
+                            /*
+                            lproduct.SKU = xlProduct.ItemLookupCode; // We need the ILC as ID of the product
+                            switch ((uint)currentMarketPlace.maskId)
+                            {
+                                case ItemMarketplace.MARKETPLACE_AMAZON:
+                                    lproduct.Quantity = xlProduct.QtyA1;
+                                    lproduct.StartPrice.Value = (double)xlProduct.PriceA1; break;
+                                case ItemMarketplace.MARKETPLACE_EBAY_1MS:
+                                    lproduct.Quantity = xlProduct.QtyE2;
+                                    lproduct.StartPrice.Value = (double)xlProduct.PriceE2; break;
+                                case ItemMarketplace.MARKETPLACE_EBAY_MECALZO:
+                                    lproduct.Quantity = xlProduct.QtyE1;
+                                    lproduct.StartPrice.Value = (double)xlProduct.PriceE1; break;
+                            } // swtich
+                            */
                         }
 
                         try
@@ -789,7 +929,6 @@ namespace BSI_InventoryPreProcessor
                             lproduct.PictureDetails.PictureURL = new StringCollection(new string[] { "http://www.tools4inet.com/0/products/tim/10061.jpg" });
 
                             // Choose the correct API call. AddItemCall works for auctions and for single items with best offer
-
                             if (!DEBUG_MODE && (currentMarketPlace.maskId > 8 && currentMarketPlace.maskId < 512)  ) // Publish only those who '8 < mask id < 512' (Not Amazons, nor websites)
                             {
                                 if (xlProduct.SellingFormat == "A" || xlProduct.Items.Count == 0)
@@ -1025,7 +1164,7 @@ namespace BSI_InventoryPreProcessor
             }
 
             btnStart.Enabled = true;
-
+            btnStartPublishing.Enabled = false;
         } // publishProducts
 
         VariationsType createVariations(ItemExcel pi, out int outVariations, out string outWidths)
@@ -1143,27 +1282,27 @@ namespace BSI_InventoryPreProcessor
             return lvt;
         } // createVariations
 
-        private ItemType BuildItem(ItemExcel excelItem)
+        ItemType BuildItem(ItemExcel lix)
         {
             ItemType item = new ItemType();
 
             // item title
-            item.Title = excelItem.Title;
+            item.Title = lix.Title;
             // item description
-            item.Description = _descriptionHeader + excelItem.Title + " " + excelItem.FullDescription + _descriptionFooter;
-            item.SKU = excelItem.SKU;
+            item.Description = _descriptionHeader + lix.Title + " " + lix.FullDescription + _descriptionFooter;
+            item.SKU = lix.SKU;
 
             // Create the picture, save the URL and then pass it to the item
             item.PictureDetails = new PictureDetailsType();
             item.PictureDetails.PhotoDisplay = PhotoDisplayCodeType.PicturePack;
             item.PictureDetails.GalleryType = GalleryTypeCodeType.Gallery;
             item.PictureDetails.PictureURL = new StringCollection();
-            foreach (String lpic in excelItem.URLPictures)
+            foreach (String lpic in lix.URLPictures)
                 item.PictureDetails.PictureURL.Add(lpic);
 
             // listing type
             BestOfferDetailsType lbo = null;
-            switch (excelItem.SellingFormat)
+            switch (lix.SellingFormat)
             {
                 case "A":
                     item.ListingType = ListingTypeCodeType.Chinese;
@@ -1208,7 +1347,7 @@ namespace BSI_InventoryPreProcessor
             item.HitCounter = HitCounterCodeType.BasicStyle;
 
             // item condition, New=1000, New without box=1500, New with defects=1750, Pre-owned=3000
-            switch (excelItem.Condition)
+            switch (lix.Condition)
             {
                 case "NEW": item.ConditionID = 1000; break;
                 case "NWB": item.ConditionID = 1500; break;
@@ -1222,69 +1361,108 @@ namespace BSI_InventoryPreProcessor
 
             // Do not specify size nor width for products with variation. Each variation has its own specifics
             // Also, do not state size/width for watches
-            if (excelItem.Items.Count == 0 && excelItem.Category != "31387" && excelItem.Category != "63852")
+            if (lix.Items.Count == 0 && lix.Category != "31387")
             {
                 litemspec = new NameValueListType();
-                litemspec.Name = getEbaySizeName(excelItem.Gender);
-                litemspec.Value = new StringCollection(new String[] { excelItem.Size });
+                litemspec.Name = getEbaySizeName(lix.Gender);
+                litemspec.Value = new StringCollection(new String[] { lix.Size });
                 item.ItemSpecifics.Add(litemspec);
 
                 litemspec = new NameValueListType();
                 litemspec.Name = "Width";
-                String lwidth = convertWidth(excelItem.Gender, excelItem.Width);
+                String lwidth = convertWidth(lix.Gender, lix.Width);
                 litemspec.Value = new StringCollection(new String[] { lwidth });
                 item.ItemSpecifics.Add(litemspec);
             }
 
-            int ebayCategory = int.Parse(excelItem.Category);
+            int lcategory = 0;
+            if (lix.Gender == "MENS")
+            {
+                // Let's see if the category was entered as a number or as text
+                if (!Int32.TryParse(lix.Category, out lcategory))
+                {
+                    switch (lix.Category.ToUpper())
+                    {
+                        case "CASUAL": lcategory = 24087; break;
+                        case "ATHLETIC": lcategory = 15709; break;
+                        case "BOOTS": lcategory = 11498; break;
+                        case "DRESS/FORMAL": lcategory = 53120; break;
+                        case "SANDALS": lcategory = 11504; break;
+                        case "SLIPPERS": lcategory = 11505; break;
+                        default: lcategory = 63850; break; // Mixed items & lots
+                    }
+                }
+            }
+            else
+            {
+                // Let's see if the category was entered as a number or as text
+                if (lix.Gender == "WOMENS")
+                {
+                    if (!Int32.TryParse(lix.Category, out lcategory))
+                    {
+                        switch (lix.Category.ToUpper())
+                        {
+                            case "HEELS": lcategory = 55793; break;
+                            case "CASUAL": lcategory = 45333; break;
+                            case "ATHLETIC": lcategory = 95672; break;
+                            case "BOOTS": lcategory = 53557; break;
+                            case "SANDALS": lcategory = 62107; break;
+                            case "SLIPPERS": lcategory = 11632; break;
+                            case "OCCUPATIONAL": lcategory = 53548; break;
+                            default: lcategory = 63889; break; // Mixed items & lots
+                        }
+                    }
+                }
+                else
+                {
+                    if (lix.Gender == "JUNIOR")
+                        lcategory = 155202;
+                }
+            }
 
             litemspec = new NameValueListType();
             litemspec.Name = "Brand";
-            litemspec.Value = new StringCollection(new String[] { excelItem.Brand });
+            litemspec.Value = new StringCollection(new String[] { lix.Brand });
             item.ItemSpecifics.Add(litemspec);
 
             litemspec = new NameValueListType();
             litemspec.Name = "Style";
-            litemspec.Value = new StringCollection(new String[] { excelItem.Style });
+            litemspec.Value = new StringCollection(new String[] { lix.Style });
             item.ItemSpecifics.Add(litemspec);
 
-            if (!String.IsNullOrEmpty(excelItem.Color))
+            if (!String.IsNullOrEmpty(lix.Color))
             {
                 litemspec = new NameValueListType();
                 litemspec.Name = "Color";
-                litemspec.Value = new StringCollection(new String[] { excelItem.Color });
+                litemspec.Value = new StringCollection(new String[] { lix.Color });
                 item.ItemSpecifics.Add(litemspec);
             }
 
-            if (!String.IsNullOrEmpty(excelItem.Material))
+            if (!String.IsNullOrEmpty(lix.Material))
             {
                 litemspec = new NameValueListType();
-
-                if (ebayCategory != 31387)
-                {
+                if (lcategory != 31387)
                     litemspec.Name = "Material";
-                }
                 else
-                {
                     litemspec.Name = "Band Material";
-                }
-
-                litemspec.Value = new StringCollection(new String[] { excelItem.Material });
+                litemspec.Value = new StringCollection(new String[] { lix.Material });
                 item.ItemSpecifics.Add(litemspec);
             }
 
-            if (!String.IsNullOrEmpty(excelItem.Shade) && ebayCategory != 63852)
+            if (!String.IsNullOrEmpty(lix.Shade))
             {
                 litemspec = new NameValueListType();
                 litemspec.Name = "Shade";
-                litemspec.Value = new StringCollection(new String[] { excelItem.Shade });
+                litemspec.Value = new StringCollection(new String[] { lix.Shade });
                 item.ItemSpecifics.Add(litemspec);
             }
+
+            // end-of-item-specifics
 
             // listing price
             item.Currency = CurrencyCodeType.USD;
 
-            if (excelItem.Items.Count == 0) // Do not set price or quantity for products with children
+            if (lix.Items.Count == 0) // Do not set price or quantity for products with children
             {
                 item.StartPrice = new AmountType();
                 item.StartPrice.currencyID = CurrencyCodeType.USD;
@@ -1300,7 +1478,7 @@ namespace BSI_InventoryPreProcessor
 
             // listing category
             CategoryType category = new CategoryType();
-            category.CategoryID = ebayCategory.ToString(); // Primary Category
+            category.CategoryID = lcategory.ToString(); // Primary Category
             item.PrimaryCategory = category;
 
             // Payment methods
@@ -1325,13 +1503,13 @@ namespace BSI_InventoryPreProcessor
             item.ReturnPolicy.Description = currentMarketPlace.ReturnsPolicies;
 
             // Create item variations if necessary
-            if (excelItem.Items.Count > 0)
+            if (lix.Items.Count > 0)
             {
                 int pvariations = 0;
                 String lwidthsList = "";
-                item.Variations = createVariations(excelItem, out pvariations,out lwidthsList);
-                excelItem.Variation = pvariations;
-                excelItem.Widths = lwidthsList;
+                item.Variations = createVariations(lix, out pvariations,out lwidthsList);
+                lix.Variation = pvariations;
+                lix.Widths = lwidthsList;
 
                 // Let's see what variations were not set to set them in default
                 if ((pvariations & VARIATIONS_WIDTH) == 0)
@@ -1339,7 +1517,7 @@ namespace BSI_InventoryPreProcessor
                     // There were sizes but not widths, then set the general width
                     litemspec = new NameValueListType();
                     litemspec.Name = "Width";
-                    String lwidth = convertWidth(excelItem.Gender, excelItem.Width);
+                    String lwidth = convertWidth(lix.Gender, lix.Width);
                     litemspec.Value = new StringCollection(new String[] { lwidth });
                     item.ItemSpecifics.Add(litemspec);
                 }
@@ -1351,7 +1529,7 @@ namespace BSI_InventoryPreProcessor
             return item;
         } // BuildItem
 
-        private ShippingDetailsType BuildShippingDetails()
+        ShippingDetailsType BuildShippingDetails()
         {
             AmountType amount;
 
@@ -1440,6 +1618,7 @@ namespace BSI_InventoryPreProcessor
         private void Form1_Load(object sender, EventArgs e)
         {
             btnStart.Enabled = true;
+            btnStartPublishing.Enabled = false;
 
             // Read all the marketplaces
             SqlConnection lconn = null;
@@ -1984,7 +2163,7 @@ namespace BSI_InventoryPreProcessor
 
         private void btnUpdateMarketplaces_Click(object sender, EventArgs e)
         {
-            UpdateMarketplaces();
+            updateMarketplaces();
         } // btnUpdateMarketplaces_Click
 
 

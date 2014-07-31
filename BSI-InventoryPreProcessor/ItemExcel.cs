@@ -27,25 +27,12 @@ namespace BSI_InventoryPreProcessor
 {
     public class ItemExcel
     {
-        private string _gender;
-
         public static int ITEM_TYPE_SINGLE = 0;
         public static int ITEM_TYPE_PARENT = 10;
 
-        public int Type { get; set; }
-        public int Received { get; set; }
-        public int Variation { get; set; }
-        public int Quantity { get; set; }
-        public uint MarketPlaces { get; set; } // BIT Flag for marketplaces
-
         public bool Ok2Publish { get; set; }
-
-        public Decimal MSRP { get; set; }
-        public Decimal Cost { get; set; }
-        public Decimal Price { get; set; }
-
-        public String Result { get; set; }
-
+        public int Type { get; set; }
+        public String Gender { get; set; }
         public String Brand { get; set; }
         public String SKU { get; set; }
         public String ItemLookupCode { get; set; }
@@ -62,37 +49,19 @@ namespace BSI_InventoryPreProcessor
         public String Material { get; set; }
         public String Color { get; set; }
         public String Shade { get; set; }
-        public String HeelHeight { get; set; }       
-        public String Gender
-        {
-            get { return _gender; }
-            set
-            {
-                switch (value)
-                {
-                    case "MEN": value = "MENS"; break;
+        public String HeelHeight { get; set; }
+        public Decimal MSRP { get; set; }
 
-                    case "WOMEN": value = "WOMENS"; break;
-
-                    case "JUNIORS": value = "JUNIOR"; break;
-                }
-                _gender = value;
-            }
-        }
-        public String SellingFormat { get; set; }   
-        public String purchaseOrder { get; set; }
-        public String listUser { get; set; }
+        public int Variation { get; set; }
         public String Widths { get; set; }
+
+        public int Received { get; set; }
+        public Decimal Cost { get; set; }
+        
         public String Title { get; set; }
 
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-
-        public List<ItemExcel> Items;
-        public List<ItemMarketplace> Markets;
-
-        public List<string> Pictures;
-        public List<string> URLPictures;
+        public int Quantity { get; set; }
+        public Decimal Price { get; set; }
 
         public int QtyA1 { get; set; }
         public int QtyA2 { get; set; }
@@ -121,13 +90,23 @@ namespace BSI_InventoryPreProcessor
         public Decimal PriceW2 { get; set; }
         public Decimal PriceW3 { get; set; }
 
+        public String SellingFormat { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+
+        public String purchaseOrder { get; set; }
+        public String listUser { get; set; }
+
+        public uint MarketPlaces { get; set; } // BIT Flag for marketplaces
+
+        public List<ItemExcel> Items;
+        public List<ItemMarketplace> Markets;
+
+        public List<string> Pictures;
+        public List<string> URLPictures;
+
         public ItemExcel()
         {
-            this.StartDate = DateTime.MinValue;
-            this.EndDate = DateTime.MinValue;
-
-            this.SellingFormat = "GTC";
-
             Type = ITEM_TYPE_SINGLE;
             Ok2Publish = false;
             Brand = ItemLookupCode = Alias = RMS_Description = Gender = Title = FullDescription = Keywords = "";
@@ -295,6 +274,23 @@ namespace BSI_InventoryPreProcessor
 
             this.MarketPlaces = pc.MarketPlaces;
 
+            /*
+            this.Items = new List<ItemExcel>();
+            foreach (ItemExcel pi in pc.Items)
+                this.Items.Add(new ItemExcel(pi));
+
+            this.Markets = new List<ItemMarketplace>();
+            foreach (ItemMarketplace pm in pc.Markets)
+                this.Markets.Add(new ItemMarketplace(pm));
+
+            this.Pictures = new List<string>();
+            foreach (String ls in pc.Pictures)
+                this.Pictures.Add(ls);
+
+            this.URLPictures = new List<string>();
+            foreach (String ls in pc.URLPictures)
+                this.URLPictures.Add(ls);
+            */
         } // copyNewItem(ItemExcel pc)
 
         public Decimal getPriceForMarketplace(int pmktidx)

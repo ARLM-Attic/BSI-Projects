@@ -1,8 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
-MinimumVisualStudioVersion = 10.0.40219.1
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketplacePublisher", "MarketplacePublisher\MarketplacePublisher.csproj", "{878C1702-7A18-4DD6-8AA3-0044B497AD0F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainPublisher-Test", "MainPublisher-Test\MainPublisher-Test.csproj", "{CBC8B0FE-BF97-44DD-A972-EEFDE09509B0}"

@@ -28,6 +28,7 @@ using eBay.Service.Call;
 using eBay.Service.Core.Sdk;
 using eBay.Service.Core.Soap;
 using eBay.Service.Util;
+using BSI_InventoryPreProcessor.berkeleyDataSetTableAdapters;
 
 
 namespace BSI_InventoryPreProcessor
@@ -676,7 +677,7 @@ namespace BSI_InventoryPreProcessor
             bool lstop = false;
 
             SqlConnection lconn = null;
-            berkeleyDataSetTableAdapters.bsi_postingTableAdapter lda;
+            bsi_postingTableAdapter lda;
             berkeleyDataSetTableAdapters.bsi_postsTableAdapter lposts_da;
             berkeleyDataSetTableAdapters.bsi_quantitiesTableAdapter lqtys_da;
 
@@ -710,58 +711,7 @@ namespace BSI_InventoryPreProcessor
                         if (xlProduct.Items.Count > 1)
                             xlProduct.Title = removeSize(xlProduct.Title);
 
-                        // Let's see if we have already posted this item
-                        SqlCommand lc = new SqlCommand();
-                        lc.Connection = lconn;
-                        lc.Parameters.Add(new SqlParameter("ppo", xlProduct.purchaseOrder));
-                        lc.Parameters.Add(new SqlParameter("psku", xlProduct.SKU));
-                        lc.Parameters.Add(new SqlParameter("psf", xlProduct.SellingFormat));
-                        lc.Parameters.Add(new SqlParameter("pmkt", (int)xlProduct.MarketPlaces));
                         
-                        String lqs = null;
-                        if (xlProduct.SellingFormat.Contains("A")) // If it is an auction we need to check the quantities table too
-                        {
-                            lqs = "SELECT theQ.postid, theQ.quantity, theQ.itemlookupcode, " +
-                                  "thePost.id, thePost.purchaseorder, thePost.sku, thePost.sellingformat, thePost.marketplace " +
-                                  "from bsi_quantities as theQ inner join bsi_posts as thePost " + 
-                                  "on theQ.postid = thePost.id " +
-                                  "where thePost.purchaseorder=@ppo AND thePost.sku=@psku AND " +
-                                  "thePost.sellingFormat=@psf AND thePost.marketplace=@pmkt AND theQ.itemlookupcode='" + xlProduct.ItemLookupCode + "' ";
-                        }
-                        else
-                        {
-                            lqs = "SELECT * FROM bsi_posts WHERE purchaseorder=@ppo AND " +
-                                  "sku=@psku AND sellingFormat=@psf AND marketplace=@pmkt";
-                        }
-
-                        lc.CommandText = lqs;
-                        SqlDataReader lr = lc.ExecuteReader();
-                        bool lexists = lr.Read();
-                        lr.Close();
-                        lc.Cancel();
-                        if ( lexists )
-                        {
-                            MessageBox.Show("\r\n\r\nYOU ARE TRYING TO RE-PUBLISH AN ITEM ("+ xlProduct.ItemLookupCode + " | " +
-                                            xlProduct.SellingFormat +
-                                            ") FROM THE SAME PURCHASE ORDER! THIS ITEM WAS PREVIOUSLY LISTED BY " + 
-                                            xlProduct.listUser + ". THE PROGRAM WILL STOP AND END\r\n\r\n",
-                                            "ERROR!", MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                            return;
-                        }
-
-                        // First, let's process the product to clean it and see if it is duplicated
-                        //if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
-                        //    isTheProductOnEbay(xlProduct);
-
-                        //else
-                        //{
-                        //    if (cmbMarkets.SelectedIndex < EBAY_STARTINGINDEX)
-                        //    {
-                        //        //isTheProductOnAmazon(xlProduct);
-                        //    }
-                        //    else
-                        //        isTheProductOnWebsite(xlProduct);
-                        //}
 
                         txtStatus.Text = "Publishing " + xlProduct.Title + " [" + 
                                          xlProduct.ItemLookupCode + " | " + xlProduct.SellingFormat + 
@@ -981,14 +931,22 @@ namespace BSI_InventoryPreProcessor
                             if (currentMarketPlace.maskId > 8 && currentMarketPlace.maskId < 512)
                             {
                                 String lpix = "pictures";
+
+                                SqlCommand lc2 = new SqlCommand("SELECT PICTURES FROM BSI_POSTING SET PICTURES='" + lpix + "' WHERE ID=" + lpostingID, lconn);
+
                                 foreach (String lpic in xlProduct.Pictures)
                                 {
                                     String lpicURL = uploadPicture(lpic);
+
+                                    
+
+
                                     if (!String.IsNullOrEmpty(lpicURL))
                                     {
                                         lpix += " | " + lpicURL;
                                     }
                                 } // foreach (String lpic in xlProduct.Pictures)
+
                                 lpix = lpix.Replace("pictures | ", "");
 
                                 SqlCommand lc2 = new SqlCommand("UPDATE BSI_POSTING SET PICTURES='" + lpix + "' WHERE ID=" + lpostingID, lconn);
@@ -999,14 +957,15 @@ namespace BSI_InventoryPreProcessor
                         }
                         catch (Exception pe)
                         {
-                            txtStatus.Text = pe.ToString() + "\r\n" + txtStatus.Text;
-                            if (MessageBox.Show("ERROR WHILE PUBLISHING ITEM:\r\n\r\n\r\n" + pe.ToString() +
-                                                "\r\n\r\nDO YOU WANT TO STOP THE PROCESS?\r\n\r\n",
-                                                "Error", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                            {
-                                lstop = true;
-                                break;
-                            };
+                            _errors.Add(xlProduct);
+                            //txtStatus.Text = pe.ToString() + "\r\n" + txtStatus.Text;
+                            //if (MessageBox.Show("ERROR WHILE PUBLISHING ITEM:\r\n\r\n\r\n" + pe.ToString() +
+                            //                    "\r\n\r\nDO YOU WANT TO STOP THE PROCESS?\r\n\r\n",
+                            //                    "Error", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                            //{
+                            //    lstop = true;
+                            //    break;
+                            //};
                         };
 
                         txtStatus.Text = "\r\n" + txtStatus.Text;

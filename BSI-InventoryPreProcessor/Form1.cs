@@ -932,7 +932,7 @@ namespace BSI_InventoryPreProcessor
                             {
                                 String lpix = "pictures";
 
-                                SqlCommand lc2 = new SqlCommand("SELECT PICTURES FROM BSI_POSTING SET PICTURES='" + lpix + "' WHERE ID=" + lpostingID, lconn);
+                                //SqlCommand lc2 = new SqlCommand("SELECT PICTURES FROM BSI_POSTING SET PICTURES='" + lpix + "' WHERE ID=" + lpostingID, lconn);
 
                                 foreach (String lpic in xlProduct.Pictures)
                                 {

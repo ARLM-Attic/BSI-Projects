@@ -166,10 +166,9 @@ namespace BSI_InventoryPreProcessor
 
             ReadExcelEntries(lorginalpathfile);
 
-            CheckAvailablePictures();
-
             if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
             {
+                CheckAvailablePictures();
                 UpdateMarketplaces();
             }
 
@@ -404,6 +403,7 @@ namespace BSI_InventoryPreProcessor
 
             _entries.AddRange(auctions);
 
+            Shuffle(_entries);
         }
 
         private ItemExcel CreateEntry(System.Array row, string currentRow)

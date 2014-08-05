@@ -20,7 +20,7 @@
 
 using System;
 using System.Collections.Generic;
-//using System.Linq;
+using System.Linq;
 using System.Text;
 
 namespace BSI_InventoryPreProcessor
@@ -32,6 +32,22 @@ namespace BSI_InventoryPreProcessor
         public static int ITEM_TYPE_SINGLE = 0;
         public static int ITEM_TYPE_PARENT = 10;
 
+        public String Rows 
+        {
+            get 
+            {
+                if (Items.Count == 0)
+                {
+                    return this.Row;
+                }
+                else 
+                {
+                    return string.Join(" ", this.Items.Select(p => p.Row));
+                }
+            }
+        }
+
+        
         public int Type { get; set; }
         public int Received { get; set; }
         public int Variation { get; set; }
@@ -46,6 +62,7 @@ namespace BSI_InventoryPreProcessor
 
         public String Result { get; set; }
 
+        public String Row { get; set; }
         public String Brand { get; set; }
         public String SKU { get; set; }
         public String ItemLookupCode { get; set; }

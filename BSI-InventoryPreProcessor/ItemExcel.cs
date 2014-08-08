@@ -146,7 +146,7 @@ namespace BSI_InventoryPreProcessor
             this.SellingFormat = "GTC";
 
             Type = ITEM_TYPE_SINGLE;
-            Ok2Publish = false;
+            Ok2Publish = true;
             Brand = ItemLookupCode = Alias = RMS_Description = Gender = Title = FullDescription = Keywords = "";
             SKU = Size = Width = Condition = Category = Style = Material = Color = Shade = HeelHeight = SellingFormat = "";
             Widths = UPC = "";

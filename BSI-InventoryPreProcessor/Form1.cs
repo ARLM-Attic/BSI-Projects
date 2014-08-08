@@ -166,6 +166,8 @@ namespace BSI_InventoryPreProcessor
 
             ReadExcelEntries(lorginalpathfile);
 
+            
+
             if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
             {
                 CheckAvailablePictures();
@@ -390,6 +392,9 @@ namespace BSI_InventoryPreProcessor
                 if (variation.Count() > 1)
                 {
                     ItemExcel parent = variation.First();
+
+                    parent.Type = ItemExcel.ITEM_TYPE_PARENT;
+
                     parent.Items.AddRange(variation.ToList());
 
                     _entries.Add(parent);
@@ -749,11 +754,54 @@ namespace BSI_InventoryPreProcessor
                     foreach (ItemExcel xlProduct in _entries)
                     {
                         //if ((xlProduct.MarketPlaces & currentMarketPlace.maskId) == 0) continue; // Skip items that do not belong to this marketplace
-                        if (!xlProduct.Ok2Publish && !this.chkPublishWOPics.Checked ) continue;
+                        if (!xlProduct.Ok2Publish) continue;
 
                         if (xlProduct.Items.Count > 1)
                             xlProduct.Title = removeSize(xlProduct.Title);
 
+                        // Let's see if we have already posted this item
+                        SqlCommand lc = new SqlCommand();
+                        lc.Connection = lconn;
+                        lc.Parameters.Add(new SqlParameter("ppo", xlProduct.purchaseOrder));
+                        lc.Parameters.Add(new SqlParameter("psku", xlProduct.SKU));
+                        lc.Parameters.Add(new SqlParameter("psf", xlProduct.SellingFormat));
+                        lc.Parameters.Add(new SqlParameter("pmkt", (int)xlProduct.MarketPlaces));
+
+                        String lqs = null;
+                        if (xlProduct.SellingFormat.Contains("A")) // If it is an auction we need to check the quantities table too
+                        {
+                            lqs = "SELECT theQ.postid, theQ.quantity, theQ.itemlookupcode, " +
+                                  "thePost.id, thePost.purchaseorder, thePost.sku, thePost.sellingformat, thePost.marketplace " +
+                                  "from bsi_quantities as theQ inner join bsi_posts as thePost " +
+                                  "on theQ.postid = thePost.id " +
+                                  "where thePost.purchaseorder=@ppo AND thePost.sku=@psku AND " +
+                                  "thePost.sellingFormat=@psf AND thePost.marketplace=@pmkt AND theQ.itemlookupcode='" + xlProduct.ItemLookupCode + "' ";
+                            /*
+                            lqs = "SELECT thePost.id, thePost.purchaseorder, thePost.sku, thePost.sellingformat, " + 
+                                  "thePost.marketplace from bsi_posts AS thePost " + 
+                                  "inner join bsi_quantities AS theQ on theQ.postid=thePost.id " + 
+                                  "WHERE thePost.purchaseorder=@ppo AND thePost.sku=@psku AND " + 
+                                  "thePost.sellingFormat=@psf AND thePost.marketplace=@pmkt";
+                            */
+                        }
+                        else
+                        {
+                            lqs = "SELECT * FROM bsi_posts WHERE purchaseorder=@ppo AND " +
+                                  "sku=@psku AND sellingFormat=@psf AND marketplace=@pmkt";
+                        }
+
+                        lc.CommandText = lqs;
+                        SqlDataReader lr = lc.ExecuteReader();
+                        bool lexists = lr.Read();
+                        lr.Close();
+                        lc.Cancel();
+                        if (lexists)
+                        {
+                            xlProduct.Result = "YOU ARE TRYING TO RE-PUBLISH AN ITEM FROM THE SAME PURCHASE ORDER!";
+                            _errors.Add(xlProduct);
+
+                            continue;
+                        }
 
                         // First, let's process the product to clean it and see if it is duplicated
                         if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX)
@@ -795,7 +843,7 @@ namespace BSI_InventoryPreProcessor
 
                             // Choose the correct API call. AddItemCall works for auctions and for single items with best offer
 
-                            if (!DEBUG_MODE && (currentMarketPlace.maskId > 8 && currentMarketPlace.maskId < 512)  ) // Publish only those who '8 < mask id < 512' (Not Amazons, nor websites)
+                            if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX) // Publish only those who '8 < mask id < 512' (Not Amazons, nor websites)
                             {
                                 if (xlProduct.SellingFormat == "A" || xlProduct.Items.Count == 0)
                                 {
@@ -2054,8 +2102,8 @@ namespace BSI_InventoryPreProcessor
 
         private void cmbMarkets_SelectedIndexChanged(object sender, EventArgs e)
         {
-            chkPublishWOPics.Enabled = (cmbMarkets.SelectedIndex < EBAY_STARTINGINDEX || cmbMarkets.SelectedIndex >= WEB_STARTINGINDEX);
-            if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX) chkPublishWOPics.Checked = false;
+            //chkPublishWOPics.Enabled = (cmbMarkets.SelectedIndex < EBAY_STARTINGINDEX || cmbMarkets.SelectedIndex >= WEB_STARTINGINDEX);
+            //if (cmbMarkets.SelectedIndex >= EBAY_STARTINGINDEX && cmbMarkets.SelectedIndex < WEB_STARTINGINDEX) chkPublishWOPics.Checked = false;
         } // cmbMarkets_SelectedIndexChanged
 
         private void eBayPageSizeToolStripMenuItem_Click(object sender, EventArgs e)

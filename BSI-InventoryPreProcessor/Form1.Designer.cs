@@ -37,7 +37,6 @@
             this.btnStart = new System.Windows.Forms.Button();
             this.txtStatus = new System.Windows.Forms.TextBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.chkPublishWOPics = new System.Windows.Forms.CheckBox();
             this.btnUpdateMarketplaces = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.cmbMarkets = new System.Windows.Forms.ComboBox();
@@ -128,17 +127,6 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // chkPublishWOPics
-            // 
-            this.chkPublishWOPics.AutoSize = true;
-            this.chkPublishWOPics.Enabled = false;
-            this.chkPublishWOPics.Location = new System.Drawing.Point(448, 142);
-            this.chkPublishWOPics.Name = "chkPublishWOPics";
-            this.chkPublishWOPics.Size = new System.Drawing.Size(179, 24);
-            this.chkPublishWOPics.TabIndex = 9;
-            this.chkPublishWOPics.Text = "Save without pictures";
-            this.chkPublishWOPics.UseVisualStyleBackColor = true;
-            // 
             // btnUpdateMarketplaces
             // 
             this.btnUpdateMarketplaces.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -215,7 +203,6 @@
             this.Controls.Add(this.cmbMarkets);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.btnUpdateMarketplaces);
-            this.Controls.Add(this.chkPublishWOPics);
             this.Controls.Add(this.txtStatus);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.btnSearchPictures);
@@ -249,7 +236,6 @@
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.TextBox txtStatus;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.CheckBox chkPublishWOPics;
         private System.Windows.Forms.Button btnUpdateMarketplaces;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox cmbMarkets;

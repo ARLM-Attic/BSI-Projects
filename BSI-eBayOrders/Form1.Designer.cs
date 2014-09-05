@@ -125,7 +125,7 @@
             "SHOES TO GO 24/7",
             "ONE MILLION SHOES",
             "PICK-A-SHOE",
-            "SMALL AVENUE"});
+            "LOCO SNEAKERS"});
             this.cmbMarketplaces.Location = new System.Drawing.Point(119, 6);
             this.cmbMarketplaces.Name = "cmbMarketplaces";
             this.cmbMarketplaces.Size = new System.Drawing.Size(167, 28);

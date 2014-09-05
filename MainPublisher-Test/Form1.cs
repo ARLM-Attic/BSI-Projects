@@ -932,10 +932,8 @@ namespace Publisher_Test
                     break;
             }; // switch
 
-            // Start time if specified. We cannot use "lix.StartDate" because some items will be posted to be published
-            // for later times accepted by eBay
-            // if (lix.StartDate > DateTime.Now)
-            // item.ScheduleTime = (DateTime.Now).AddHours(3); // lix.StartDate;
+            // Start time if specified
+            if (lix.StartDate > DateTime.Now) item.ScheduleTime = lix.StartDate;
 
             item.HitCounter = HitCounterCodeType.BasicStyle;
 

@@ -130,7 +130,12 @@ namespace BSI_InventoryPreProcessor
 
         public Form1()
         {
-            InitializeComponent();            
+            InitializeComponent();      
+      
+
+            
+
+
         }  // public Form1()
 
         private void btnStart_Click(object sender, EventArgs e)
@@ -361,14 +366,14 @@ namespace BSI_InventoryPreProcessor
 
                 if (!String.IsNullOrEmpty(firstCol))
                 {
-                    try
-                    {
+                    //try
+                    //{
                         items.Add(CreateEntry(row, currentRow.ToString()));
-                    }
-                    catch (Exception)
-                    {
-                        _errors.Add( new ItemExcel() {  ItemLookupCode = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_LOOKUPCODE)), Result = "Unable to read row" } );
-                    }
+                    //}
+                    //catch (Exception)
+                    //{
+                    //    _errors.Add( new ItemExcel() {  ItemLookupCode = Convert.ToString(row.GetValue(1, EXCEL_INTCOLUMN_LOOKUPCODE)), Result = "Unable to read row" } );
+                    //}
                 }
                 else
                 {
